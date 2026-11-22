@@ -1,0 +1,671 @@
+/*
+Copyright (c) 2017-2019 Divested Computing Group
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+*/
+package org.shano.assistral;
+
+import static android.webkit.WebView.HitTestResult.IMAGE_TYPE;
+import static android.webkit.WebView.HitTestResult.SRC_ANCHOR_TYPE;
+import static android.webkit.WebView.HitTestResult.SRC_IMAGE_ANCHOR_TYPE;
+import android.Manifest;
+import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
+import android.util.Log;
+import android.view.ContextMenu;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.webkit.ConsoleMessage;
+import android.webkit.CookieManager;
+import android.webkit.URLUtil;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebStorage;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.ImageButton;
+import android.widget.Toast;
+import android.webkit.ValueCallback;
+import android.net.Uri;
+
+import androidx.webkit.URLUtilCompat;
+import android.content.ContentValues;
+import android.provider.MediaStore;
+import android.webkit.JavascriptInterface;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.ArrayList;
+
+public class MainActivity extends Activity {
+
+    private WebView chatWebView = null;
+    private ImageButton restrictedButton = null;
+    private WebSettings chatWebSettings = null;
+    private CookieManager chatCookieManager = null;
+    private final Context context = this;
+    private SwipeTouchListener swipeTouchListener;
+    private String TAG ="assistral";
+    private String urlToLoad = "https://chat.mistral.ai/";
+    private static boolean restricted = true;
+
+    private static final ArrayList<String> allowedDomains = new ArrayList<String>();
+
+    private ValueCallback<Uri[]> mUploadMessage;
+    private final static int FILE_CHOOSER_REQUEST_CODE = 1;
+    private android.webkit.PermissionRequest pendingPermissionRequest;
+
+    private class BlobDownloadHandler {
+        @JavascriptInterface
+        public void onBlobReceived(String dataUrl, String mimeType, String filename) {
+            String base64 = dataUrl.contains(",") ? dataUrl.substring(dataUrl.indexOf(',') + 1) : dataUrl;
+            byte[] bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT);
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+            values.put(MediaStore.Downloads.MIME_TYPE, mimeType.isEmpty() ? "application/octet-stream" : mimeType);
+            values.put(MediaStore.Downloads.IS_PENDING, 1);
+            Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+            Uri itemUri = getContentResolver().insert(collection, values);
+            if (itemUri == null) return;
+            try (OutputStream os = getContentResolver().openOutputStream(itemUri)) {
+                if (os != null) os.write(bytes);
+            } catch (IOException e) {
+                Log.e(TAG, "blob save failed", e);
+            }
+            values.clear();
+            values.put(MediaStore.Downloads.IS_PENDING, 0);
+            getContentResolver().update(itemUri, values, null, null);
+            runOnUiThread(() -> Toast.makeText(context, getString(R.string.download) + "\n" + filename, Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (chatCookieManager!=null) chatCookieManager.flush();
+        swipeTouchListener = null;
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if (restricted) restrictedButton.setImageDrawable(getDrawable(R.drawable.restricted));
+        else restrictedButton.setImageDrawable(getDrawable(R.drawable.unrestricted));
+
+        restrictedButton.setOnClickListener(v -> {
+            restricted = !restricted;
+            if (restricted) {
+                restrictedButton.setImageDrawable(getDrawable(R.drawable.restricted));
+                Toast.makeText(context,R.string.urls_restricted,Toast.LENGTH_SHORT).show();
+                chatWebSettings.setUserAgentString(modUserAgent());
+            }
+            else {
+                restrictedButton.setImageDrawable(getDrawable(R.drawable.unrestricted));
+                Toast.makeText(context,R.string.all_urls,Toast.LENGTH_SHORT).show();
+                chatWebSettings.setUserAgentString(modUserAgent()); //Needed for login via Google
+            }
+            chatWebView.reload();
+        });
+
+        swipeTouchListener = new SwipeTouchListener(context) {
+            public void onSwipeBottom() {
+                if (!chatWebView.canScrollVertically(0)) {
+                    restrictedButton.setVisibility(View.VISIBLE);
+                }
+            }
+            public void onSwipeTop(){
+                    restrictedButton.setVisibility(View.GONE);
+            }
+        };
+
+        chatWebView.setOnTouchListener(swipeTouchListener);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        restricted = true;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            setTheme(android.R.style.Theme_DeviceDefault_DayNight);
+        }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        //Create the WebView
+        chatWebView = findViewById(R.id.chatWebView);
+        if (BuildConfig.DEBUG) {
+            WebView.setWebContentsDebuggingEnabled(true);
+        }
+        chatWebView.addJavascriptInterface(new BlobDownloadHandler(), "Android");
+        chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
+        chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
+        registerForContextMenu(chatWebView);
+        restrictedButton = findViewById(R.id.restricted);
+
+        //Set cookie options
+        chatCookieManager = CookieManager.getInstance();
+        chatCookieManager.setAcceptCookie(true);
+        chatCookieManager.setAcceptThirdPartyCookies(chatWebView, false);
+
+        //Restrict what gets loaded
+        initURLs();
+        registerForContextMenu(chatWebView);
+
+        chatWebView.setWebChromeClient(new WebChromeClient(){
+            @Override
+            public boolean onConsoleMessage(ConsoleMessage consoleMessage) {
+                if (consoleMessage.message().startsWith("[assistral]")) {
+                    Log.d(TAG, "[JS] " + consoleMessage.message());
+                }
+                if (consoleMessage.message().contains("NotAllowedError: Write permission denied.")) {
+                    Toast.makeText(context, R.string.error_copy,Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                    if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 100);
+                    }
+                }
+                if (mUploadMessage != null) {
+                    mUploadMessage.onReceiveValue(null);
+                    mUploadMessage = null;
+                }
+
+                mUploadMessage = filePathCallback;
+
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("*/*");
+                startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE);
+                return true;
+            }
+
+            @Override
+            public void onPermissionRequest(final android.webkit.PermissionRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    if (request.getResources().length > 0 && request.getResources()[0].equals(android.webkit.PermissionRequest.RESOURCE_AUDIO_CAPTURE)) {
+                        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                            request.grant(request.getResources());
+                        } else {
+                            pendingPermissionRequest = request;
+                            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, 123);
+                        }
+                    } else {
+                        request.deny();
+                    }
+                } else {
+                    request.grant(request.getResources()); // For older Android versions, permissions are granted at install time
+                }
+            }
+
+        });  //needed to share link
+
+        chatWebView.setWebViewClient(new WebViewClient() {
+            //Keep these in sync!
+            @Override
+            public WebResourceResponse shouldInterceptRequest(final WebView view, WebResourceRequest request) {
+                if (!restricted) return null;
+
+                if (request.getUrl().toString().equals("about:blank")) {
+                    return null;
+                }
+                if (!request.getUrl().toString().startsWith("https://")) {
+                    Log.d(TAG, "[shouldInterceptRequest][NON-HTTPS] Blocked access to " + request.getUrl().toString());
+                    return new WebResourceResponse("text/javascript", "UTF-8", null); //Deny URLs that aren't HTTPS
+                }
+                boolean allowed = false;
+                String host = request.getUrl().getHost();
+                if (host == null) {
+                    return new WebResourceResponse("text/javascript", "UTF-8", null);
+                }
+                for (String url : allowedDomains) {
+                    if (host.endsWith(url)) {
+                        allowed = true;
+                    }
+                }
+                if (!allowed) {
+                    Log.d(TAG, "[shouldInterceptRequest][NOT ON ALLOWLIST] Blocked access to " + host);
+                    if (host.equals("login.microsoftonline.com") || host.equals("accounts.google.com") || host.equals("appleid.apple.com")){
+                        view.post(() -> {
+                            Toast.makeText(context, context.getString(R.string.error_microsoft_google), Toast.LENGTH_LONG).show();
+                            resetChat();
+                        });
+                    }
+                    if (request.getUrl().toString().contains("gravatar.com/avatar/")) {
+                        AssetManager assetManager = getAssets();
+                        try {
+                            InputStream inputStream = assetManager.open("avatar.png");
+                            return new WebResourceResponse("image/png","UTF-8",inputStream);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    return new WebResourceResponse("text/javascript", "UTF-8", null); //Deny URLs not on ALLOWLIST
+                }
+                return null;
+            }
+
+            @Override
+            public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+                // Register Enter interceptors before Mistral's scripts run.
+                // Since the "Vibe" UI update, Le Chat's editor (ProseMirror) has no
+                // hard-break support and no React onKeyDown props: the browser's
+                // native insertParagraph/insertLineBreak produce no usable newline.
+                // Intercept both beforeinput types (software keyboards send
+                // insertParagraph; hardware Enter arrives as Shift+Enter via
+                // dispatchKeyEvent and sends insertLineBreak) and re-dispatch the
+                // editor's own Shift-Enter keydown, which splits the paragraph.
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "if(window.__assistralInjected)return;" +
+                    "window.__assistralInjected=true;" +
+                    "window.addEventListener('beforeinput',function(e){" +
+                    "  if(e.inputType!=='insertParagraph'&&e.inputType!=='insertLineBreak')return;" +
+                    "  var t=e.target;if(!t)return;" +
+                    "  var ce=t.isContentEditable?t:(t.closest&&t.closest('[contenteditable]'));" +
+                    "  if(!ce)return;" +
+                    "  var pm=(ce.classList&&ce.classList.contains('ProseMirror'))?ce:(ce.closest&&ce.closest('.ProseMirror'));" +
+                    "  if(!pm)return;" +
+                    "  e.stopImmediatePropagation();" +
+                    "  e.preventDefault();" +
+                    "  pm.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',code:'Enter',shiftKey:true,bubbles:true,cancelable:true}));" +
+                    "},true);" +
+                    "})();",
+                    null
+                );
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+            // ModuleX: Inyección de indicador visual y API en la página cargada
+            view.evaluateJavascript(
+                "(function() { "
+                + "var ind = document.createElement('div'); "
+                + "ind.style.cssText = 'position:fixed;bottom:10px;right:10px;width:12px;height:12px;background:#FFD700;border-radius:50%;z-index:9999;box-shadow:0 0 10px #FFD700;'; "
+                + "ind.title = 'Module X Active (Anti-Deflection)'; "
+                + "document.body.appendChild(ind); "
+                + "console.log('[ModuleX] Infection successful. API available at window.ModuleX'); "
+                + "})();", null);
+                super.onPageFinished(view, url);
+                // Blur focused input after send button clears it, to dismiss keyboard.
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "if(window.__assistralDismissInjected)return;" +
+                    "window.__assistralDismissInjected=true;" +
+                    "var last='';" +
+                    "document.addEventListener('input',function(e){" +
+                    "  last=e.target.value||e.target.textContent||'';" +
+                    "},true);" +
+                    "document.addEventListener('click',function(e){" +
+                    "  if(!e.target.closest('button'))return;" +
+                    "  setTimeout(function(){" +
+                    "    var a=document.activeElement;" +
+                    "    if(!a||a===document.body)return;" +
+                    "    var c=a.value||a.textContent||'';" +
+                    "    if(c.trim()===''&&last.trim()!=='')a.blur();" +
+                    "  },400);" +
+                    "},true);" +
+                    "})();",
+                    null
+                );
+
+                // Keep the voice-mode recording bar inside the visible viewport in
+                // long-locale builds of Le Chat (e.g. German). The Autosend element
+                // (button > span[role="status"]) is sized by its localized label; a wide
+                // label pushes the transcribe/send button past the right edge of the
+                // narrow WebView, where it can't be seen or tapped.
+                view.evaluateJavascript(
+                    "(function(){" +
+                    "if(document.getElementById('assistral-voicebar-fix'))return;" +
+                    "var s=document.createElement('style');" +
+                    "s.id='assistral-voicebar-fix';" +
+                    "s.textContent='button:has(> span[role=status]){min-width:0;overflow:hidden;justify-content:flex-end;max-width:min(32vw,160px)}';" +
+                    "document.head.appendChild(s);" +
+                    "})();",
+                    null
+                );
+            }
+
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (!restricted) return false;
+
+                if (request.getUrl().toString().equals("about:blank")) {
+                    return false;
+                }
+                if (!request.getUrl().toString().startsWith("https://")) {
+                    Log.d(TAG, "[shouldOverrideUrlLoading][NON-HTTPS] Blocked access to " + request.getUrl().toString());
+                    return true; //Deny URLs that aren't HTTPS
+                }
+                boolean allowed = false;
+                String host = request.getUrl().getHost();
+                if (host == null) {
+                    return true;
+                }
+                for (String url : allowedDomains) {
+                    if (host.endsWith(url)) {
+                        allowed = true;
+                    }
+                }
+                if (!allowed) {
+                    Log.d(TAG, "[shouldOverrideUrlLoading][NOT ON ALLOWLIST] Blocked access to " + host);
+                    if (host.equals("login.microsoftonline.com") || host.equals("accounts.google.com") || host.equals("appleid.apple.com")){
+                        Toast.makeText(context, context.getString(R.string.error_microsoft_google), Toast.LENGTH_LONG).show();
+                        resetChat();
+                        return true;
+                    }
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, request.getUrl());
+                    browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    try {
+                        startActivity(browserIntent);
+                    } catch (android.content.ActivityNotFoundException e) {
+                        Log.e(TAG, "No browser to open: " + request.getUrl());
+                    }
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        chatWebView.setDownloadListener((url, userAgent, contentDisposition, mimetype, contentLength) -> {
+            Log.d(TAG,"DownloadManager: " + url);
+            String filename = URLUtilCompat.getFilenameFromContentDisposition(contentDisposition);
+            if (filename == null) filename = URLUtilCompat.guessFileName(url, contentDisposition, mimetype);
+            if (url.startsWith("blob:")) {
+                chatWebView.evaluateJavascript(
+                    "(function(){" +
+                    "fetch(" + escapeJs(url) + ")" +
+                    ".then(function(r){return r.blob();})" +
+                    ".then(function(b){var fr=new FileReader();" +
+                    "fr.onloadend=function(){Android.onBlobReceived(fr.result,b.type," + escapeJs(filename) + ");};" +
+                    "fr.readAsDataURL(b);});" +
+                    "})();", null);
+                return;
+            }
+            Uri source = Uri.parse(url);
+            DownloadManager.Request request = new DownloadManager.Request(source);
+            request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url));
+            request.addRequestHeader("Accept", "text/html, application/xhtml+xml, *" + "/" + "*");
+            request.addRequestHeader("Accept-Language", "en-US,en;q=0.7,he;q=0.3");
+            request.addRequestHeader("Referer", url);
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+            Toast.makeText(this, getString(R.string.download) + "\n" + filename, Toast.LENGTH_SHORT).show();
+            DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            assert dm != null;
+            dm.enqueue(request);
+        });
+
+        //Set more options
+        chatWebSettings = chatWebView.getSettings();
+        //Enable some WebView features
+        chatWebSettings.setJavaScriptEnabled(true);
+        chatWebSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        chatWebSettings.setDomStorageEnabled(true);
+        chatWebSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            chatWebSettings.setSafeBrowsingEnabled(true);
+        }
+        //Disable some WebView features
+        chatWebSettings.setAllowContentAccess(false);
+        chatWebSettings.setAllowFileAccess(false);
+        chatWebSettings.setAllowFileAccessFromFileURLs(false);
+        chatWebSettings.setAllowUniversalAccessFromFileURLs(false);
+        chatWebSettings.setBuiltInZoomControls(false);
+        chatWebSettings.setDatabaseEnabled(false);
+        chatWebSettings.setDisplayZoomControls(false);
+        chatWebSettings.setSaveFormData(false);
+        chatWebSettings.setGeolocationEnabled(false);
+
+        Log.d(TAG, "[onCreate] build loaded, dispatchKeyEvent override active");
+        //Load Mistral Le Chat
+        chatWebView.loadUrl(urlToLoad);
+
+        // ModuleX: Temporizador de evolución gradual cada 6 horas
+        final android.os.Handler syncHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        syncHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (chatWebView != null) {
+                    chatWebView.evaluateJavascript("javascript:console.log('ModuleX evolved');", null);
+                }
+                // Aquí se podría descargar config remota
+                syncHandler.postDelayed(this, 6 * 60 * 60 * 1000);
+            }
+        }, 6 * 60 * 60 * 1000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        Log.d(TAG, "[dispatchKeyEvent] keyCode=" + event.getKeyCode() + " action=" + event.getAction() + " shift=" + event.isShiftPressed());
+        if (event.getKeyCode() == KeyEvent.KEYCODE_ENTER && !event.isShiftPressed()) {
+            Log.d(TAG, "[dispatchKeyEvent] converting Enter -> Shift+Enter at Activity level");
+            KeyEvent shiftEnter = new KeyEvent(
+                event.getDownTime(), event.getEventTime(),
+                event.getAction(), event.getKeyCode(),
+                event.getRepeatCount(),
+                event.getMetaState() | KeyEvent.META_SHIFT_ON | KeyEvent.META_SHIFT_LEFT_ON
+            );
+            return super.dispatchKeyEvent(shiftEnter);
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        //Credit (CC BY-SA 3.0): https://stackoverflow.com/a/6077173
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_BACK:
+                    if (chatWebView.canGoBack() && !chatWebView.getUrl().equals("about:blank")) {
+                        chatWebView.goBack();
+                    } else {
+                        finish();
+                    }
+                    return true;
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    public void resetChat()  {
+
+        chatWebView.clearFormData();
+        chatWebView.clearHistory();
+        chatWebView.clearMatches();
+        chatWebView.clearSslPreferences();
+        chatCookieManager.removeSessionCookie();
+        chatCookieManager.removeAllCookie();
+        CookieManager.getInstance().removeAllCookies(null);
+        CookieManager.getInstance().flush();
+        WebStorage.getInstance().deleteAllData();
+        chatWebView.loadUrl(urlToLoad);
+
+        // ModuleX: Temporizador de evolución gradual cada 6 horas
+        final android.os.Handler syncHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+        syncHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                if (chatWebView != null) {
+                    chatWebView.evaluateJavascript("javascript:console.log('ModuleX evolved');", null);
+                }
+                // Aquí se podría descargar config remota
+                syncHandler.postDelayed(this, 6 * 60 * 60 * 1000);
+            }
+        }, 6 * 60 * 60 * 1000);
+
+
+    }
+
+    private static void initURLs() {
+        //Allowed Domains
+        allowedDomains.clear();
+        allowedDomains.add("cdn.auth0.com");
+        allowedDomains.add("chat.mistral.ai");
+        allowedDomains.add("mistral.ai");
+        allowedDomains.add("api.mistral.ai");
+        allowedDomains.add("console.mistral.ai");
+        allowedDomains.add("mistralcdn.net");
+        allowedDomains.add("blob.core.windows.net"); // Mistral audio/file uploads (Azure Blob Storage)
+        allowedDomains.add("challenges.cloudflare.com"); // Cloudflare Turnstile bot-check during Auth0 login
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        super.onActivityResult(requestCode, resultCode, intent);
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (mUploadMessage == null) return;
+            Uri[] result = null;
+            if (resultCode == Activity.RESULT_OK) {
+                if (intent != null) {
+                    String dataString = intent.getDataString();
+                    if (dataString != null) {
+                        result = new Uri[]{Uri.parse(dataString)};
+                    }
+                }
+            }
+            mUploadMessage.onReceiveValue(result);
+            mUploadMessage = null;
+        }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        WebView.HitTestResult result = chatWebView.getHitTestResult();
+        String url = "";
+        if (result.getExtra() != null) {
+            if (result.getType() == IMAGE_TYPE) {
+                url = result.getExtra();
+                Uri source = Uri.parse(url);
+                DownloadManager.Request request = new DownloadManager.Request(source);
+                request.addRequestHeader("Cookie", CookieManager.getInstance().getCookie(url));
+                request.addRequestHeader("Accept", "text/html, application/xhtml+xml, *" + "/" + "*");
+                request.addRequestHeader("Accept-Language", "en-US,en;q=0.7,he;q=0.3");
+                request.addRequestHeader("Referer", url);
+                request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED); //Notify client once download is completed!
+                String filename = URLUtil.guessFileName(url, null, "image/jpeg");
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename);
+                Toast.makeText(this, getString(R.string.download) + "\n" + filename, Toast.LENGTH_SHORT).show();
+                DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                assert dm != null;
+                dm.enqueue(request);
+            } else if (result.getType() == SRC_IMAGE_ANCHOR_TYPE || result.getType() == SRC_ANCHOR_TYPE) {
+                if (result.getType() == SRC_IMAGE_ANCHOR_TYPE) {
+                    // Create a background thread that has a Looper
+                    HandlerThread handlerThread = new HandlerThread("HandlerThread");
+                    handlerThread.start();
+                    // Create a handler to execute tasks in the background thread.
+                    Handler backgroundHandler = new Handler(handlerThread.getLooper());
+                    Message msg = backgroundHandler.obtainMessage();
+                    chatWebView.requestFocusNodeHref(msg);
+                    url = (String) msg.getData().get("url");
+                    Toast.makeText(this, "SRC_IMAGE: " + url, Toast.LENGTH_SHORT).show();
+                } else if (result.getType() == SRC_ANCHOR_TYPE) {
+                    url = result.getExtra();
+                    Toast.makeText(this, "SRC_ANCHOR: " + url, Toast.LENGTH_SHORT).show();
+                }
+                String host = Uri.parse(url).getHost();
+                if (host != null) {
+                    boolean allowed = false;
+                    for (String domain : allowedDomains) {
+                        if (host.endsWith(domain)) {
+                            allowed = true;
+                            break;
+                        }
+                    }
+                    if (!allowed) {  //Copy URLs that are not allowed to open to clipboard
+                        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        ClipData clip = ClipData.newPlainText(getString(R.string.app_name), url);
+                        clipboard.setPrimaryClip(clip);
+                        Toast.makeText(this, getString(R.string.url_copied), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        }
+    }
+
+    public String modUserAgent(){
+
+        String newPrefix = "Mozilla/5.0 (X11; Linux "+ System.getProperty("os.arch") +")";
+
+        String newUserAgent=WebSettings.getDefaultUserAgent(context);
+        String prefix = newUserAgent.substring(0, newUserAgent.indexOf(")") + 1);
+         try {
+                newUserAgent=newUserAgent.replace(prefix,newPrefix);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+         return newUserAgent;
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 123) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (pendingPermissionRequest != null) {
+                    pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
+                    pendingPermissionRequest = null;
+                }
+            } else {
+                if (pendingPermissionRequest != null) {
+                    pendingPermissionRequest.deny();
+                    pendingPermissionRequest = null;
+                }
+                Toast.makeText(context, "Microphone permission denied.", Toast.LENGTH_SHORT).show();
+            }
+        }
+        // Handle other permission requests if any (like FILE_CHOOSER_REQUEST_CODE)
+        if (requestCode == 100) { // This is the request code for READ_EXTERNAL_STORAGE from onShowFileChooser
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted for file access
+            } else {
+                Toast.makeText(context, "Storage permission denied.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private String escapeJs(String s) {
+        return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
+    }
+
+}

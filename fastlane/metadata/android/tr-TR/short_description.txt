@@ -1,0 +1,1 @@
+Mistral Le Chat için WebView sarmalayıcı
