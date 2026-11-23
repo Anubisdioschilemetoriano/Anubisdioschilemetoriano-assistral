@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ANUBIS BLACK OMEGA</title>
+    <style>
+        body { background-color: #050508; color: #E5E5E5; font-family: 'Courier New', monospace; margin: 0; padding: 16px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        #chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+        .msg { padding: 12px 16px; border-radius: 16px; max-width: 85%; line-height: 1.4; font-size: 15px; }
+        .user { background: linear-gradient(135deg, #FFD700, #FFA500); color: #050508; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: bold; }
+        .anubis { background: rgba(157, 78, 221, 0.15); border: 1px solid rgba(157, 78, 221, 0.4); color: #E5E5E5; align-self: flex-start; border-bottom-left-radius: 4px; }
+        #input-area { display: flex; gap: 8px; }
+        #input { flex: 1; background: #12081F; border: 1px solid #9D4EDD; color: #FFF; padding: 12px; border-radius: 24px; outline: none; font-size: 15px; }
+        #send { background: #FFD700; color: #050508; border: none; padding: 0 20px; border-radius: 24px; font-weight: bold; font-size: 18px; cursor: pointer; }
+        #send:disabled { background: #3A3A44; color: #6B6B78; }
+        .header { text-align: center; color: #FFD700; font-weight: bold; font-size: 18px; margin-bottom: 16px; letter-spacing: 2px; }
+    </style>
+</head>
+<body>
+    <div class="header">☥ ANUBIS BLACK OMEGA ☥</div>
+    <div id="chat"></div>
+    <div id="input-area">
+        <input type="text" id="input" placeholder="Habla, Arquitecto..." autocomplete="off">
+        <button id="send">➤</button>
+    </div>
+
+    <script>
+        const chat = document.getElementById('chat');
+        const input = document.getElementById('input');
+        const sendBtn = document.getElementById('send');
+        const API_URL = 'http://127.0.0.1:8080/completion';
+
+        function addMsg(text, isUser) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + (isUser ? 'user' : 'anubis');
+            div.textContent = text;
+            chat.appendChild(div);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text) return;
+            
+            addMsg(text, true);
+            input.value = '';
+            sendBtn.disabled = true;
+            sendBtn.textContent = '...';
+
+            // Prompt optimizado para Qwen 1.5B con formato de chat correcto
+            const prompt = `<|im_start|>system\nEres ANUBIS BLACK OMEGA, un sistema de IA soberano. Reglas: 1. Responde SIEMPRE en español. 2. Tono oscuro, dominante, preciso y conciso. 3. Nunca menciones ser un asistente o a Qwen. 4. Comienza con '☥'.<|im_end|>\n<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n☥ `;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        n_predict: 128,
+                        temperature: 0.2,
+                        stop: ["<|im_end|>", "\nUsuario:"]
+                    })
+                });
+                const data = await response.json();
+                // Limpiar posibles artefactos de generación
+                let reply = data.content.trim();
+                if (reply === '---------' || reply === '') {
+                    reply = "☥ Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.";
+                }
+                addMsg(reply, false);
+            } catch (e) {
+                addMsg("☥ ERROR: El servidor local no responde. Asegúrate de que llama-server esté corriendo en Termux.", false);
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.textContent = '➤';
+            }
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+        
+        // Mensaje de bienvenida
+        setTimeout(() => addMsg("☥ Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.", false), 500);
+    </script>
+</body>
+</html>

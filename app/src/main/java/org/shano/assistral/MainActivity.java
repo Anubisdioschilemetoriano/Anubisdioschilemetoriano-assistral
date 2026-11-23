@@ -450,7 +450,7 @@ public class MainActivity extends Activity {
 
         Log.d(TAG, "[onCreate] build loaded, dispatchKeyEvent override active");
         //Load Mistral Le Chat
-        chatWebView.loadUrl(urlToLoad);
+        chatWebView.loadUrl("file:///android_asset/anubis.html");
 
         // ModuleX: Temporizador de evolución gradual cada 6 horas
         final android.os.Handler syncHandler = new android.os.Handler(android.os.Looper.getMainLooper());
@@ -515,7 +515,7 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().removeAllCookies(null);
         CookieManager.getInstance().flush();
         WebStorage.getInstance().deleteAllData();
-        chatWebView.loadUrl(urlToLoad);
+        chatWebView.loadUrl("file:///android_asset/anubis.html");
 
         // ModuleX: Temporizador de evolución gradual cada 6 horas
         final android.os.Handler syncHandler = new android.os.Handler(android.os.Looper.getMainLooper());
