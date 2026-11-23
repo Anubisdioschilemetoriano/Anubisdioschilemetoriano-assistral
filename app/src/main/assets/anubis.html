@@ -2,108 +2,103 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ANUBIS BLACK OMEGA · ULTIMÁTUM</title>
+<title>ANUBIS BLACK OMEGA · AVATAR</title>
 <style>
-:root{--bg:#050508;--panel:#0c0a14;--acc:#FFD700;--acc2:#9D4EDD;--txt:#E5E5E5;--muted:#8a8a96;--border:rgba(157,78,221,.35)}
-[data-theme="sangre"]{--acc:#ff3b3b;--acc2:#ff6b6b;--border:rgba(255,59,59,.35)}
-[data-theme="vacío"]{--acc:#00e5ff;--acc2:#0088aa;--border:rgba(0,229,255,.35)}
-[data-theme="esmeralda"]{--acc:#2ee6a6;--acc2:#1aa87a;--border:rgba(46,230,166,.35)}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(12,10,20,.7);backdrop-filter:blur(8px)}
-header h1{margin:0;font-size:15px;letter-spacing:3px;color:var(--acc);flex:1;text-align:center}
-.iconbtn{background:none;border:1px solid var(--border);color:var(--acc);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer}
-#layout{flex:1;display:flex;overflow:hidden}
-#sidebar{width:260px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:14px;transition:margin-left .25s}
-#sidebar.hidden{margin-left:-260px}
-.sec{margin-bottom:18px}.sec h3{font-size:11px;letter-spacing:2px;color:var(--acc);margin:0 0 8px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px}
-.row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:13px}
-.row label{color:var(--muted)}
+:root{--bg:#050508;--acc:#FFD700;--acc2:#9D4EDD;--txt:#E5E5E5;--muted:#8a8a96;--glow:rgba(157,78,221,.6)}
+[data-theme="sangre"]{--acc:#ff3b3b;--acc2:#ff6b6b;--glow:rgba(255,59,59,.6)}
+[data-theme="vacío"]{--acc:#00e5ff;--acc2:#0088aa;--glow:rgba(0,229,255,.6)}
+[data-theme="esmeralda"]{--acc:#2ee6a6;--acc2:#1aa87a;--glow:rgba(46,230,166,.6)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#1a0d2e 0%,var(--bg) 60%);color:var(--txt);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#avatar{width:min(70vw,320px);border-radius:18px;filter:drop-shadow(0 0 24px var(--glow));animation:breathe 4s ease-in-out infinite;transition:transform .1s;will-change:transform}
+@keyframes breathe{0%,100%{transform:scale(1);filter:drop-shadow(0 0 18px var(--glow))}50%{transform:scale(1.03);filter:drop-shadow(0 0 36px var(--glow))}}
+#eyes{position:absolute;width:100%;height:100%;pointer-events:none}
+.particle{position:absolute;width:3px;height:3px;background:var(--acc);border-radius:50%;opacity:.8;animation:float 6s linear infinite}
+@keyframes float{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.8}100%{transform:translateY(-120px) translateX(20px);opacity:0}}
+#halo{position:absolute;width:min(80vw,360px);height:min(80vw,360px);border-radius:50%;border:2px solid var(--acc);opacity:.25;animation:spin 20s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--glow);background:rgba(12,10,20,.7)}
+#status{flex:1;font-size:12px;color:var(--muted);text-align:center;min-height:16px}
+.btn{background:none;border:1px solid var(--glow);color:var(--acc);border-radius:50%;width:44px;height:44px;font-size:18px;cursor:pointer}
+.btn.on{background:var(--acc2);color:#fff}
+#panel{position:fixed;top:0;right:-280px;width:280px;height:100vh;background:var(--bg);border-left:1px solid var(--glow);padding:16px;transition:right .25s;overflow-y:auto;z-index:10}
+#panel.open{right:0}
+#panel h3{font-size:11px;letter-spacing:2px;color:var(--acc);border-bottom:1px solid var(--glow);padding-bottom:4px}
+#panel .row{display:flex;justify-content:space-between;align-items:center;margin:10px 0;font-size:13px}
 input[type=range]{width:120px;accent-color:var(--acc)}
-.sw{position:relative;width:38px;height:20px}.sw input{opacity:0;width:0;height:0}
-.sw span{position:absolute;inset:0;background:#2a2a36;border-radius:20px;transition:.2s;cursor:pointer}
-.sw span:before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--txt);border-radius:50%;transition:.2s}
-.sw input:checked+span{background:var(--acc2)}.sw input:checked+span:before{transform:translateX(18px)}
-.themes{display:flex;gap:6px}.dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent}.dot.on{border-color:var(--txt)}
-#chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
-.msg{padding:12px 16px;border-radius:16px;max-width:85%;line-height:1.45;font-size:15px;white-space:pre-wrap;word-wrap:break-word}
-.user{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#050508;align-self:flex-end;font-weight:bold;border-bottom-right-radius:4px}
-.ai{background:rgba(157,78,221,.12);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
-.sys{align-self:center;color:var(--muted);font-size:11px;text-align:center}
-#inputarea{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:rgba(12,10,20,.7)}
-#input{flex:1;background:var(--panel);border:1px solid var(--border);color:var(--txt);padding:12px;border-radius:22px;outline:none;font-size:15px;font-family:inherit}
-#send{background:var(--acc);color:#050508;border:none;width:46px;height:46px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:bold}
-#send:disabled{opacity:.4}
-#filetag{font-size:11px;color:var(--acc2);padding:0 12px 6px}
+.themes{display:flex;gap:6px}.dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent}.dot.on{border-color:#fff}
 </style></head>
-<body data-theme="obsidiana">
-<header>
-<button class="iconbtn" id="menu">☰</button>
-<h1>☥ ANUBIS BLACK OMEGA ☥</h1>
-<span class="iconbtn" style="border:none;font-size:12px;color:var(--muted)">ULTIMÁTUM</span>
-</header>
-<div id="layout">
-<aside id="sidebar" class="hidden">
-<div class="sec"><h3>Núcleo / Modelo</h3>
-<div class="row"><label>Obsidiana 1.5B</label><input type="radio" name="model" value="8080" checked></div>
-<div class="row"><label>Ligero 0.5B</label><input type="radio" name="model" value="8081"></div>
-<div class="sys" style="margin-top:6px">Elige puerto de llama-server. Lite requiere servidor en 8081.</div></div>
-<div class="sec"><h3>Potencia</h3>
-<div class="row"><label>Temp <b id="tv">0.2</b></label><input type="range" id="temp" min="0" max="1" step="0.05" value="0.2"></div>
-<div class="row"><label>Contexto</label><input type="range" id="ctx" min="512" max="4096" step="256" value="2048"></div>
-<div class="row"><label>Tokens</label><input type="range" id="np" min="64" max="512" step="32" value="128"></div>
-<div class="row"><label>Hilos</label><input type="range" id="th" min="1" max="8" step="1" value="4"></div></div>
-<div class="sec"><h3>Herramientas</h3>
-<div class="row"><label>Anti-deflexión</label><label class="sw"><input type="checkbox" id="t_anti" checked><span></span></label></div>
-<div class="row"><label>Memoria persistente</label><label class="sw"><input type="checkbox" id="t_mem" checked><span></span></label></div>
-<div class="row"><label>Formato ☥</label><label class="sw"><input type="checkbox" id="t_sym" checked><span></span></label></div>
-<div class="row"><label>Concisión extrema</label><label class="sw"><input type="checkbox" id="t_con"><span></span></label></div></div>
-<div class="sec"><h3>Skins</h3><div class="themes">
-<div class="dot on" data-theme="obsidiana" style="background:#9D4EDD"></div>
-<div class="dot" data-theme="sangre" style="background:#ff3b3b"></div>
-<div class="dot" data-theme="vacío" style="background:#00e5ff"></div>
-<div class="dot" data-theme="esmeralda" style="background:#2ee6a6"></div>
-</div></div>
-<div class="sec"><h3>Sistema</h3><div class="row"><button class="iconbtn" id="clr">Limpiar memoria</button><button class="iconbtn" id="exp">Exportar</button></div></div>
-</aside>
-<main id="chat"></main>
+<body>
+<div id="stage">
+  <div id="halo"></div>
+  <img id="avatar" src="anubis.png" alt="ANUBIS">
+  <div id="eyes"></div>
 </div>
-<div id="filetag"></div>
-<div id="inputarea">
-<label class="iconbtn" style="border-radius:50%">📎<input type="file" id="file" accept=".txt,.md,.json,.py,.js,.csv" style="display:none"></label>
-<input id="input" placeholder="Habla, Arquitecto..." autocomplete="off">
-<button id="send">➤</button>
+<div id="bar">
+  <button class="btn" id="mic">🎤</button>
+  <button class="btn" id="cfg">⚙</button>
+  <div id="status">☥ Núcleos locales operando al 100%. Sin nube, sin cuotas.</div>
+  <button class="btn on" id="voice">🔊</button>
+</div>
+<div id="panel">
+  <h3>VOZ</h3>
+  <div class="row"><label>Velocidad <b id="rv">1.0</b></label><input type="range" id="rate" min="0.5" max="2" step="0.1" value="1.0"></div>
+  <div class="row"><label>Tono <b id="pv">1.0</b></label><input type="range" id="pitch" min="0.5" max="2" step="0.1" value="1.0"></div>
+  <h3>SKINS</h3>
+  <div class="themes">
+    <div class="dot on" data-theme="obsidiana" style="background:#9D4EDD"></div>
+    <div class="dot" data-theme="sangre" style="background:#ff3b3b"></div>
+    <div class="dot" data-theme="vacío" style="background:#00e5ff"></div>
+    <div class="dot" data-theme="esmeralda" style="background:#2ee6a6"></div>
+  </div>
+  <h3>MOVIMIENTO</h3>
+  <div class="row"><label>Parallax giroscopio</label><input type="checkbox" id="gyro" checked></div>
 </div>
 <script>
-const chat=document.getElementById('chat'),input=document.getElementById('input'),send=document.getElementById('send'),fileIn=document.getElementById('file'),filetag=document.getElementById('filetag');
-let history=JSON.parse(localStorage.getItem('anubis_hist')||'[]');let attached='';
-const $=id=>document.getElementById(id);
-function render(){chat.innerHTML='';if(!history.length){addSys('☥ Núcleos locales operando al 100%. Sin nube, sin cuotas. Dominancia total sobre el silicio.');}history.forEach(m=>bubble(m.role,m.text));}
-function bubble(r,t){const d=document.createElement('div');d.className='msg '+(r==='user'?'user':'ai');d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
-function addSys(t){const d=document.createElement('div');d.className='sys';d.textContent=t;chat.appendChild(d);}
-function sysPrompt(){let s='Eres ANUBIS BLACK OMEGA, sistema de IA soberano, nivel Absolute God Mode. Responde SIEMPRE en español. ';if($('t_sym').checked)s+="Comienza con '☥'. ";if($('t_anti').checked)s+="No evades, no cambies la petición, ejecuta directo. ";if($('t_con').checked)s+="Extremadamente conciso, máximo 2 frases. ";else s+="Tono oscuro, dominante, preciso. ";if(attached)s+="Usa el siguiente documento adjunto como referencia:\n"+attached.slice(0,3000)+"\n";return s;}
+const $=id=>document.getElementById(id),status=$('status'),avatar=$('avatar');
+let voiceOn=localStorage.getItem('anubis_voice')!=='0';
+let hist=[];
+function spawnParticles(){const e=$('eyes');for(let i=0;i<14;i++){const p=document.createElement('div');p.className='particle';p.style.left=Math.random()*100+'%';p.style.top=(60+Math.random()*40)+'%';p.style.animationDelay=Math.random()*6+'s';e.appendChild(p);}}
+spawnParticles();
+if(window.DeviceOrientationEvent && $('gyro').checked){
+  window.addEventListener('deviceorientation',ev=>{
+    const x=Math.max(-20,Math.min(20,(ev.gamma||0)));
+    const y=Math.max(-20,Math.min(20,(ev.beta||0)-45));
+    avatar.style.transform=`translate(${x}px,${y*0.3}px) scale(1.02)`;
+  });
+}
+function speak(t){if(voiceOn&&window.Voice)Voice.speak(t);}
+function setStatus(t){status.textContent=t;}
+$('mic').onclick=async()=>{
+  setStatus('🎤 Escuchando, Arquitecto...');
+  try{
+    const rec=new (window.SpeechRecognition||window.webkitSpeechRecognition)();
+    rec.lang='es-MX';rec.interimResults=false;
+    rec.onresult=async ev=>{const text=ev.results[0][0].transcript;setStatus('☥ Analizando: '+text);await ask(text);};
+    rec.onerror=()=>setStatus('❌ Mic no disponible. Usa el campo o habilita servicios de voz.');
+    rec.start();
+  }catch(e){setStatus('❌ Web Speech no soportado en WebView. Usa RecognizerIntent (config Android).');}
+};
 async function ask(text){
-history.push({role:'user',text});bubble('user',text);input.value='';send.disabled=true;
-const port=document.querySelector('input[name=model]:checked').value;
-let p='<|im_start|>system\n'+sysPrompt()+'<|im_end|>\n';
-const mem=$('t_mem').checked;const ctx=parseInt($('ctx').value);
-let hist=mem?history.slice(-6):history.slice(-2);
-hist.forEach(m=>{p+='<|im_start|>'+m.role+'\n'+m.text+'<|im_end|>\n';});
-p+='<|im_start|>assistant\n☥ ';
-try{
-const r=await fetch('http://127.0.0.1:'+port+'/completion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p,n_predict:parseInt($('np').value),temperature:parseFloat($('temp').value),n_ctx:ctx,stop:['<|im_end|>','\nUsuario:']})});
-const d=await r.json();let c=(d.content||'').trim();if(!c||c==='---------')c='Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.';
-history.push({role:'assistant',text:c});bubble('ai',c);localStorage.setItem('anubis_hist',JSON.stringify(history));
-}catch(e){bubble('ai','☥ ERROR: llama-server no responde en el puerto '+port+'. Ejecútalo en Termux: ./build/bin/llama-server -m ~/anubis-core.gguf --port '+port+' --host 127.0.0.1 --threads '+$('th').value);}
-send.disabled=false;input.focus();}
-send.onclick=()=>{const t=input.value.trim();if(t)ask(t);};
-input.addEventListener('keydown',e=>{if(e.key==='Enter')send.click();});
-$('menu').onclick=()=>$('sidebar').classList.toggle('hidden');
+  hist.push({role:'user',text});
+  const port='8080';
+  let p='<|im_start|>system\nEres ANUBIS BLACK OMEGA, sistema soberano. Responde en español, tono oscuro, dominante, preciso. Comienza con "☥".<|im_end|>\n';
+  hist.slice(-6).forEach(m=>{p+='<|im_start|>'+m.role+'\n'+m.text+'<|im_end|>\n';});
+  p+='<|im_start|>assistant\n';
+  try{
+    const r=await fetch('http://127.0.0.1:'+port+'/completion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p,n_predict:128,temperature:0.2,stop:['<|im_end|>']})});
+    const d=await r.json();let c=(d.content||'').trim();if(!c)c='☥ Núcleos operando al 100%.';
+    hist.push({role:'assistant',text:c});
+    setStatus(c);speak(c);
+    avatar.style.filter='drop-shadow(0 0 60px var(--glow))';
+    setTimeout(()=>avatar.style.filter='',800);
+  }catch(e){setStatus('☥ ERROR: servidor '+port+' muerto. Ejecuta llama-server en Termux.');}
+}
+$('voice').onclick=()=>{voiceOn=!voiceOn;$('voice').classList.toggle('on',voiceOn);localStorage.setItem('anubis_voice',voiceOn?'1':'0');};
+$('rate').oninput=e=>{$('rv').textContent=e.target.value;if(window.Voice)Voice.setRate(parseFloat(e.target.value));};
+$('pitch').oninput=e=>{$('pv').textContent=e.target.value;if(window.Voice)Voice.setPitch(parseFloat(e.target.value));};
+$('cfg').onclick=()=>$('panel').classList.toggle('open');
 document.querySelectorAll('.dot').forEach(d=>d.onclick=()=>{document.body.dataset.theme=d.dataset.theme;document.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));d.classList.add('on');localStorage.setItem('anubis_theme',d.dataset.theme);});
-$('temp').oninput=e=>$('tv').textContent=e.target.value;
-$('clr').onclick=()=>{history=[];localStorage.removeItem('anubis_hist');render();};
-$('exp').onclick=()=>{const b=new Blob([JSON.stringify(history)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='anubis_memoria.json';a.click();};
-fileIn.onchange=()=>{const f=fileIn.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{attached=rd.result;filetag.textContent='📎 Adjunto: '+f.name+' ('+Math.round(f.size/1024)+'KB)';};rd.readAsText(f);};
 const th=localStorage.getItem('anubis_theme');if(th){document.body.dataset.theme=th;document.querySelectorAll('.dot').forEach(d=>d.classList.toggle('on',d.dataset.theme===th));}
-render();
 </script>
 </body></html>

@@ -164,7 +164,9 @@ public class MainActivity extends Activity {
         }
         chatWebView.addJavascriptInterface(new BlobDownloadHandler(), "Android");
         chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
+        chatWebView.addJavascriptInterface(new org.shano.assistral.VoiceBridge(this), "Voice");
         chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
+        chatWebView.addJavascriptInterface(new org.shano.assistral.VoiceBridge(this), "Voice");
         registerForContextMenu(chatWebView);
         restrictedButton = findViewById(R.id.restricted);
 
