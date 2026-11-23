@@ -431,6 +431,10 @@ public class MainActivity extends Activity {
         chatWebSettings = chatWebView.getSettings();
         //Enable some WebView features
         chatWebSettings.setJavaScriptEnabled(true);
+        chatWebSettings.setDomStorageEnabled(true);
+        chatWebSettings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        chatWebSettings.setDomStorageEnabled(true);
+        chatWebSettings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         chatWebSettings.setDomStorageEnabled(true);
         chatWebSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);

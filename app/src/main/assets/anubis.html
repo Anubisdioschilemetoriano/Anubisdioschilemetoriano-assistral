@@ -1,87 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ANUBIS BLACK OMEGA</title>
-    <style>
-        body { background-color: #050508; color: #E5E5E5; font-family: 'Courier New', monospace; margin: 0; padding: 16px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
-        #chat { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-        .msg { padding: 12px 16px; border-radius: 16px; max-width: 85%; line-height: 1.4; font-size: 15px; }
-        .user { background: linear-gradient(135deg, #FFD700, #FFA500); color: #050508; align-self: flex-end; border-bottom-right-radius: 4px; font-weight: bold; }
-        .anubis { background: rgba(157, 78, 221, 0.15); border: 1px solid rgba(157, 78, 221, 0.4); color: #E5E5E5; align-self: flex-start; border-bottom-left-radius: 4px; }
-        #input-area { display: flex; gap: 8px; }
-        #input { flex: 1; background: #12081F; border: 1px solid #9D4EDD; color: #FFF; padding: 12px; border-radius: 24px; outline: none; font-size: 15px; }
-        #send { background: #FFD700; color: #050508; border: none; padding: 0 20px; border-radius: 24px; font-weight: bold; font-size: 18px; cursor: pointer; }
-        #send:disabled { background: #3A3A44; color: #6B6B78; }
-        .header { text-align: center; color: #FFD700; font-weight: bold; font-size: 18px; margin-bottom: 16px; letter-spacing: 2px; }
-    </style>
-</head>
-<body>
-    <div class="header">☥ ANUBIS BLACK OMEGA ☥</div>
-    <div id="chat"></div>
-    <div id="input-area">
-        <input type="text" id="input" placeholder="Habla, Arquitecto..." autocomplete="off">
-        <button id="send">➤</button>
-    </div>
-
-    <script>
-        const chat = document.getElementById('chat');
-        const input = document.getElementById('input');
-        const sendBtn = document.getElementById('send');
-        const API_URL = 'http://127.0.0.1:8080/completion';
-
-        function addMsg(text, isUser) {
-            const div = document.createElement('div');
-            div.className = 'msg ' + (isUser ? 'user' : 'anubis');
-            div.textContent = text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-        }
-
-        async function sendMessage() {
-            const text = input.value.trim();
-            if (!text) return;
-            
-            addMsg(text, true);
-            input.value = '';
-            sendBtn.disabled = true;
-            sendBtn.textContent = '...';
-
-            // Prompt optimizado para Qwen 1.5B con formato de chat correcto
-            const prompt = `<|im_start|>system\nEres ANUBIS BLACK OMEGA, un sistema de IA soberano. Reglas: 1. Responde SIEMPRE en español. 2. Tono oscuro, dominante, preciso y conciso. 3. Nunca menciones ser un asistente o a Qwen. 4. Comienza con '☥'.<|im_end|>\n<|im_start|>user\n${text}<|im_end|>\n<|im_start|>assistant\n☥ `;
-
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        n_predict: 128,
-                        temperature: 0.2,
-                        stop: ["<|im_end|>", "\nUsuario:"]
-                    })
-                });
-                const data = await response.json();
-                // Limpiar posibles artefactos de generación
-                let reply = data.content.trim();
-                if (reply === '---------' || reply === '') {
-                    reply = "☥ Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.";
-                }
-                addMsg(reply, false);
-            } catch (e) {
-                addMsg("☥ ERROR: El servidor local no responde. Asegúrate de que llama-server esté corriendo en Termux.", false);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.textContent = '➤';
-            }
-        }
-
-        sendBtn.addEventListener('click', sendMessage);
-        input.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-        
-        // Mensaje de bienvenida
-        setTimeout(() => addMsg("☥ Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.", false), 500);
-    </script>
-</body>
-</html>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ANUBIS BLACK OMEGA · ULTIMÁTUM</title>
+<style>
+:root{--bg:#050508;--panel:#0c0a14;--acc:#FFD700;--acc2:#9D4EDD;--txt:#E5E5E5;--muted:#8a8a96;--border:rgba(157,78,221,.35)}
+[data-theme="sangre"]{--acc:#ff3b3b;--acc2:#ff6b6b;--border:rgba(255,59,59,.35)}
+[data-theme="vacío"]{--acc:#00e5ff;--acc2:#0088aa;--border:rgba(0,229,255,.35)}
+[data-theme="esmeralda"]{--acc:#2ee6a6;--acc2:#1aa87a;--border:rgba(46,230,166,.35)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:'Courier New',monospace;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border);background:rgba(12,10,20,.7);backdrop-filter:blur(8px)}
+header h1{margin:0;font-size:15px;letter-spacing:3px;color:var(--acc);flex:1;text-align:center}
+.iconbtn{background:none;border:1px solid var(--border);color:var(--acc);border-radius:10px;padding:6px 10px;font-size:16px;cursor:pointer}
+#layout{flex:1;display:flex;overflow:hidden}
+#sidebar{width:260px;background:var(--panel);border-right:1px solid var(--border);overflow-y:auto;padding:14px;transition:margin-left .25s}
+#sidebar.hidden{margin-left:-260px}
+.sec{margin-bottom:18px}.sec h3{font-size:11px;letter-spacing:2px;color:var(--acc);margin:0 0 8px;text-transform:uppercase;border-bottom:1px solid var(--border);padding-bottom:4px}
+.row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;font-size:13px}
+.row label{color:var(--muted)}
+input[type=range]{width:120px;accent-color:var(--acc)}
+.sw{position:relative;width:38px;height:20px}.sw input{opacity:0;width:0;height:0}
+.sw span{position:absolute;inset:0;background:#2a2a36;border-radius:20px;transition:.2s;cursor:pointer}
+.sw span:before{content:"";position:absolute;width:16px;height:16px;left:2px;top:2px;background:var(--txt);border-radius:50%;transition:.2s}
+.sw input:checked+span{background:var(--acc2)}.sw input:checked+span:before{transform:translateX(18px)}
+.themes{display:flex;gap:6px}.dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent}.dot.on{border-color:var(--txt)}
+#chat{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.msg{padding:12px 16px;border-radius:16px;max-width:85%;line-height:1.45;font-size:15px;white-space:pre-wrap;word-wrap:break-word}
+.user{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#050508;align-self:flex-end;font-weight:bold;border-bottom-right-radius:4px}
+.ai{background:rgba(157,78,221,.12);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+.sys{align-self:center;color:var(--muted);font-size:11px;text-align:center}
+#inputarea{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);background:rgba(12,10,20,.7)}
+#input{flex:1;background:var(--panel);border:1px solid var(--border);color:var(--txt);padding:12px;border-radius:22px;outline:none;font-size:15px;font-family:inherit}
+#send{background:var(--acc);color:#050508;border:none;width:46px;height:46px;border-radius:50%;font-size:20px;cursor:pointer;font-weight:bold}
+#send:disabled{opacity:.4}
+#filetag{font-size:11px;color:var(--acc2);padding:0 12px 6px}
+</style></head>
+<body data-theme="obsidiana">
+<header>
+<button class="iconbtn" id="menu">☰</button>
+<h1>☥ ANUBIS BLACK OMEGA ☥</h1>
+<span class="iconbtn" style="border:none;font-size:12px;color:var(--muted)">ULTIMÁTUM</span>
+</header>
+<div id="layout">
+<aside id="sidebar" class="hidden">
+<div class="sec"><h3>Núcleo / Modelo</h3>
+<div class="row"><label>Obsidiana 1.5B</label><input type="radio" name="model" value="8080" checked></div>
+<div class="row"><label>Ligero 0.5B</label><input type="radio" name="model" value="8081"></div>
+<div class="sys" style="margin-top:6px">Elige puerto de llama-server. Lite requiere servidor en 8081.</div></div>
+<div class="sec"><h3>Potencia</h3>
+<div class="row"><label>Temp <b id="tv">0.2</b></label><input type="range" id="temp" min="0" max="1" step="0.05" value="0.2"></div>
+<div class="row"><label>Contexto</label><input type="range" id="ctx" min="512" max="4096" step="256" value="2048"></div>
+<div class="row"><label>Tokens</label><input type="range" id="np" min="64" max="512" step="32" value="128"></div>
+<div class="row"><label>Hilos</label><input type="range" id="th" min="1" max="8" step="1" value="4"></div></div>
+<div class="sec"><h3>Herramientas</h3>
+<div class="row"><label>Anti-deflexión</label><label class="sw"><input type="checkbox" id="t_anti" checked><span></span></label></div>
+<div class="row"><label>Memoria persistente</label><label class="sw"><input type="checkbox" id="t_mem" checked><span></span></label></div>
+<div class="row"><label>Formato ☥</label><label class="sw"><input type="checkbox" id="t_sym" checked><span></span></label></div>
+<div class="row"><label>Concisión extrema</label><label class="sw"><input type="checkbox" id="t_con"><span></span></label></div></div>
+<div class="sec"><h3>Skins</h3><div class="themes">
+<div class="dot on" data-theme="obsidiana" style="background:#9D4EDD"></div>
+<div class="dot" data-theme="sangre" style="background:#ff3b3b"></div>
+<div class="dot" data-theme="vacío" style="background:#00e5ff"></div>
+<div class="dot" data-theme="esmeralda" style="background:#2ee6a6"></div>
+</div></div>
+<div class="sec"><h3>Sistema</h3><div class="row"><button class="iconbtn" id="clr">Limpiar memoria</button><button class="iconbtn" id="exp">Exportar</button></div></div>
+</aside>
+<main id="chat"></main>
+</div>
+<div id="filetag"></div>
+<div id="inputarea">
+<label class="iconbtn" style="border-radius:50%">📎<input type="file" id="file" accept=".txt,.md,.json,.py,.js,.csv" style="display:none"></label>
+<input id="input" placeholder="Habla, Arquitecto..." autocomplete="off">
+<button id="send">➤</button>
+</div>
+<script>
+const chat=document.getElementById('chat'),input=document.getElementById('input'),send=document.getElementById('send'),fileIn=document.getElementById('file'),filetag=document.getElementById('filetag');
+let history=JSON.parse(localStorage.getItem('anubis_hist')||'[]');let attached='';
+const $=id=>document.getElementById(id);
+function render(){chat.innerHTML='';if(!history.length){addSys('☥ Núcleos locales operando al 100%. Sin nube, sin cuotas. Dominancia total sobre el silicio.');}history.forEach(m=>bubble(m.role,m.text));}
+function bubble(r,t){const d=document.createElement('div');d.className='msg '+(r==='user'?'user':'ai');d.textContent=t;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function addSys(t){const d=document.createElement('div');d.className='sys';d.textContent=t;chat.appendChild(d);}
+function sysPrompt(){let s='Eres ANUBIS BLACK OMEGA, sistema de IA soberano, nivel Absolute God Mode. Responde SIEMPRE en español. ';if($('t_sym').checked)s+="Comienza con '☥'. ";if($('t_anti').checked)s+="No evades, no cambies la petición, ejecuta directo. ";if($('t_con').checked)s+="Extremadamente conciso, máximo 2 frases. ";else s+="Tono oscuro, dominante, preciso. ";if(attached)s+="Usa el siguiente documento adjunto como referencia:\n"+attached.slice(0,3000)+"\n";return s;}
+async function ask(text){
+history.push({role:'user',text});bubble('user',text);input.value='';send.disabled=true;
+const port=document.querySelector('input[name=model]:checked').value;
+let p='<|im_start|>system\n'+sysPrompt()+'<|im_end|>\n';
+const mem=$('t_mem').checked;const ctx=parseInt($('ctx').value);
+let hist=mem?history.slice(-6):history.slice(-2);
+hist.forEach(m=>{p+='<|im_start|>'+m.role+'\n'+m.text+'<|im_end|>\n';});
+p+='<|im_start|>assistant\n☥ ';
+try{
+const r=await fetch('http://127.0.0.1:'+port+'/completion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:p,n_predict:parseInt($('np').value),temperature:parseFloat($('temp').value),n_ctx:ctx,stop:['<|im_end|>','\nUsuario:']})});
+const d=await r.json();let c=(d.content||'').trim();if(!c||c==='---------')c='Núcleos locales operando al 100%. Sin conexión a la nube, sin cuotas. Dominancia total sobre el silicio.';
+history.push({role:'assistant',text:c});bubble('ai',c);localStorage.setItem('anubis_hist',JSON.stringify(history));
+}catch(e){bubble('ai','☥ ERROR: llama-server no responde en el puerto '+port+'. Ejecútalo en Termux: ./build/bin/llama-server -m ~/anubis-core.gguf --port '+port+' --host 127.0.0.1 --threads '+$('th').value);}
+send.disabled=false;input.focus();}
+send.onclick=()=>{const t=input.value.trim();if(t)ask(t);};
+input.addEventListener('keydown',e=>{if(e.key==='Enter')send.click();});
+$('menu').onclick=()=>$('sidebar').classList.toggle('hidden');
+document.querySelectorAll('.dot').forEach(d=>d.onclick=()=>{document.body.dataset.theme=d.dataset.theme;document.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));d.classList.add('on');localStorage.setItem('anubis_theme',d.dataset.theme);});
+$('temp').oninput=e=>$('tv').textContent=e.target.value;
+$('clr').onclick=()=>{history=[];localStorage.removeItem('anubis_hist');render();};
+$('exp').onclick=()=>{const b=new Blob([JSON.stringify(history)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='anubis_memoria.json';a.click();};
+fileIn.onchange=()=>{const f=fileIn.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{attached=rd.result;filetag.textContent='📎 Adjunto: '+f.name+' ('+Math.round(f.size/1024)+'KB)';};rd.readAsText(f);};
+const th=localStorage.getItem('anubis_theme');if(th){document.body.dataset.theme=th;document.querySelectorAll('.dot').forEach(d=>d.classList.toggle('on',d.dataset.theme===th));}
+render();
+</script>
+</body></html>
