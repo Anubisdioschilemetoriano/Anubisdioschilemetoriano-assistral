@@ -1,56 +1,128 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ANUBIS V3</title>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ANUBIS BLACK OMEGA</title>
 <style>
-body{--bg:#050508;--acc:#FFD700;--acc2:#9D4EDD;--txt:#E5E5E5;margin:0;background:var(--bg);color:var(--txt);font-family:monospace;height:100vh;display:flex;flex-direction:column}
-body.sangre{--acc:#ff3b3b;--acc2:#ff6b6b}
-body.vacio{--acc:#00e5ff;--acc2:#0088aa}
-body.esmeralda{--acc:#2ee6a6;--acc2:#1aa87a}
-header{display:flex;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--acc2);background:rgba(12,10,20,.7)}
-h1{flex:1;text-align:center;font-size:14px;color:var(--acc);margin:0;letter-spacing:2px}
-button,.btn{background:none;border:1px solid var(--acc2);color:var(--acc);border-radius:8px;padding:6px 10px;cursor:pointer;font-size:14px}
-#live{width:10px;height:10px;border-radius:50%;background:#f33;box-shadow:0 0 6px #f33}
-#live.ok{background:#2ee6a6;box-shadow:0 0 8px #2ee6a6}
-#chat{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
-.m{padding:10px 14px;border-radius:12px;max-width:85%;white-space:pre-wrap;word-wrap:break-word;font-size:14px;line-height:1.4}
-.u{align-self:flex-end;background:linear-gradient(135deg,var(--acc),var(--acc2));color:#000;font-weight:bold}
-.a{align-self:flex-start;border:1px solid var(--acc2);background:rgba(157,78,221,.1)}
-.s{align-self:center;color:#8a8a96;font-size:11px}
-#met{font-size:10px;color:#8a8a96;padding:0 12px 4px;text-align:right}
-#err{color:#f66;font-size:11px;padding:4px 12px;min-height:14px;background:#1a0000;border-top:1px solid #400}
-#bar{display:flex;gap:8px;padding:10px;border-top:1px solid var(--acc2);background:rgba(12,10,20,.7)}
-#in{flex:1;background:#0c0a14;border:1px solid var(--acc2);color:var(--txt);padding:10px;border-radius:20px;outline:none;font-family:inherit;font-size:14px}
-#go{background:var(--acc);color:#000;border:none;border-radius:50%;width:44px;height:44px;font-size:18px;font-weight:bold}
-#go:disabled{opacity:.4}
-#avatar{font-size:100px;text-align:center;color:var(--acc);text-shadow:0 0 30px var(--acc);animation:b 4s ease-in-out infinite;padding:20px 0}
-@keyframes b{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:1}}
-#avatar.talk{text-shadow:0 0 60px var(--acc);transform:scale(1.1)}
+:root{--bg:#020204;--gold:#f5c518;--purple:#9d4edd;--txt:#ececf1;--dim:#6b6b78;--r:14px}
+body.sangre{--gold:#ff3b3b;--purple:#ff6b6b}body.vacio{--gold:#00e5ff;--purple:#0088aa}body.esmeralda{--gold:#2ee6a6;--purple:#1aa87a}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:'Courier New',monospace;color:var(--txt);background:var(--bg);transition:background .8s}
+#neb{position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(157,78,221,.22),transparent 70%),radial-gradient(ellipse 60% 50% at 50% 80%,rgba(245,197,24,.10),transparent 70%);animation:drift 18s ease-in-out infinite alternate}
+@keyframes drift{0%{transform:scale(1) translateY(0);opacity:.7}100%{transform:scale(1.15) translateY(-20px);opacity:1}}
+#stars{position:fixed;inset:0;z-index:1;pointer-events:none}
+#app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(245,197,24,.25);background:rgba(2,2,4,.55)}
+h1{flex:1;text-align:center;font-size:15px;letter-spacing:4px;color:var(--gold);text-shadow:0 0 12px var(--gold);transition:.5s}
+.pill{width:34px;height:34px;border-radius:50%;border:1px solid rgba(245,197,24,.4);background:rgba(0,0,0,.3);color:var(--gold);font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.3s}
+.pill:active{transform:scale(.9)}
+#live{width:12px;height:12px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 10px #ff3b3b;animation:pulse 1.5s infinite}
+#live.ok{background:#2ee6a6;box-shadow:0 0 12px #2ee6a6;animation:none}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+#stage{flex:1;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#anubis{width:min(58vw,240px);height:auto;filter:drop-shadow(0 0 24px var(--gold));animation:breathe 5s ease-in-out infinite;transition:filter .4s}
+@keyframes breathe{0%,100%{transform:scale(1);filter:drop-shadow(0 0 18px var(--gold))}50%{transform:scale(1.04);filter:drop-shadow(0 0 40px var(--gold))}}
+#anubis.think{animation:glitch .3s steps(2) infinite}
+#anubis.talk{filter:drop-shadow(0 0 60px var(--gold))}
+@keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-2px,1px) skewX(2deg)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,2px) skewX(-2deg)}100%{transform:translate(0)}}
+.eye{animation:blink 4.5s infinite}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.wave{position:absolute;border:1px solid var(--gold);border-radius:50%;opacity:0;pointer-events:none}
+.wave.go{animation:ripple 1.4s ease-out infinite}
+@keyframes ripple{0%{width:40px;height:40px;opacity:.7}100%{width:320px;height:320px;opacity:0}}
+#viz{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:3px;height:30px;align-items:flex-end;opacity:0;transition:.3s}
+#viz.on{opacity:1}
+#viz i{width:3px;background:var(--gold);height:4px;border-radius:2px;box-shadow:0 0 6px var(--gold)}
+#hud{position:absolute;top:8px;right:10px;font-size:10px;color:var(--dim);text-align:right;letter-spacing:1px}
+#hud b{color:var(--gold)}
+#chat{position:absolute;left:0;right:0;bottom:0;max-height:42%;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:linear-gradient(to top,rgba(2,2,4,.85),transparent)}
+.m{padding:10px 14px;border-radius:var(--r);max-width:86%;font-size:14px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;animation:rise .4s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.u{align-self:flex-end;background:linear-gradient(135deg,var(--gold),var(--purple));color:#020204;font-weight:bold;border-bottom-right-radius:3px}
+.a{align-self:flex-start;background:rgba(157,78,221,.12);border:1px solid rgba(157,78,221,.4);border-left:2px solid var(--gold);border-bottom-left-radius:3px}
+.s{align-self:center;color:var(--dim);font-size:11px;background:none;border:none}
+#err{font-size:11px;color:#ff6b6b;padding:2px 12px;min-height:16px;background:rgba(40,0,0,.4)}
+#bar{display:flex;gap:8px;padding:10px 12px;border-top:1px solid rgba(245,197,24,.25);background:rgba(2,2,4,.7)}
+#in{flex:1;background:rgba(20,15,30,.7);border:1px solid rgba(157,78,221,.4);color:var(--txt);padding:12px;border-radius:24px;outline:none;font-family:inherit;font-size:15px}
+#in:focus{border-color:var(--gold);box-shadow:0 0 12px rgba(245,197,24,.3)}
+#go{background:var(--gold);color:#020204;border:none;width:48px;height:48px;border-radius:50%;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 0 16px var(--gold)}
+#go:disabled{opacity:.4;box-shadow:none}
+#panel{position:fixed;top:0;left:-300px;width:300px;height:100%;background:rgba(8,6,16,.96);border-right:1px solid rgba(245,197,24,.3);padding:16px;overflow-y:auto;transition:left .3s;z-index:5}
+#panel.open{left:0}
+#panel h3{font-size:11px;letter-spacing:2px;color:var(--gold);margin:14px 0 8px;border-bottom:1px solid rgba(245,197,24,.2);padding-bottom:4px}
+.row{display:flex;justify-content:space-between;align-items:center;margin:9px 0;font-size:13px;color:var(--dim)}
+input[type=range]{width:120px;accent-color:var(--gold)}
+.sw{position:relative;width:40px;height:22px}.sw input{display:none}.sw span{position:absolute;inset:0;background:#2a2a36;border-radius:22px;transition:.2s;cursor:pointer}.sw span:before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}.sw input:checked+span{background:var(--purple)}.sw input:checked+span:before{transform:translateX(18px)}
+.themes{display:flex;gap:8px}.tdot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent}.tdot.on{border-color:#fff}
+.btn2{background:none;border:1px solid rgba(245,197,24,.4);color:var(--gold);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:12px;font-family:inherit}
+#reason{font-size:11px;color:var(--dim);white-space:pre-wrap;word-break:break-all;background:#000;border:1px solid rgba(157,78,221,.3);border-radius:8px;padding:8px;max-height:180px;overflow:auto}
 </style></head><body>
-<header><button id="skin">🎨</button><h1>☥ ANUBIS BLACK OMEGA ☥</h1><span id="live" title="MUERTO"></span><button id="test">🔌</button></header>
-<div id="avatar">☥</div>
+<div id="neb"></div><canvas id="stars"></canvas>
+<div id="app">
+<header><div class="pill" id="menu">☰</div><h1>☥ ANUBIS BLACK OMEGA ☥</h1><span id="live"></span><div class="pill" id="mic">🎤</div></header>
+<div id="stage">
+  <div class="wave" id="w1"></div><div class="wave" id="w2"></div>
+  <svg id="anubis" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#1a1026"/><stop offset="100%" stop-color="#050308"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter></defs>
+    <path d="M60 12 L48 30 L44 20 L40 34 L42 52 L36 70 L44 82 L40 104 L52 96 L60 118 L68 96 L80 104 L76 82 L84 70 L78 52 L80 34 L76 20 L72 30 Z" fill="url(#g)" stroke="var(--gold)" stroke-width="1.4"/>
+    <path d="M44 20 L40 34 L48 30 Z" fill="var(--gold)" opacity=".5"/><path d="M76 20 L80 34 L72 30 Z" fill="var(--gold)" opacity=".5"/>
+    <path d="M50 56 Q54 52 58 56 Q54 60 50 56 Z" fill="var(--gold)" class="eye" style="transform-origin:54px 56px"/><path d="M62 56 Q66 52 70 56 Q66 60 62 56 Z" fill="var(--gold)" class="eye" style="transform-origin:66px 56px"/>
+    <path d="M56 64 L60 70 L64 64" fill="none" stroke="var(--gold)" stroke-width="1"/>
+    <path d="M44 82 L76 82 L72 90 L48 90 Z" fill="var(--purple)" opacity=".4" stroke="var(--gold)" stroke-width=".8"/>
+    <circle cx="52" cy="86" r="1.5" fill="var(--gold)"/><circle cx="60" cy="86" r="1.5" fill="var(--gold)"/><circle cx="68" cy="86" r="1.5" fill="var(--gold)"/>
+    <text x="60" y="100" fill="var(--gold)" font-size="6" text-anchor="middle" opacity=".7">𓀀 𓁢 𓃀</text>
+  </svg>
+  <div id="viz"></div>
+  <div id="hud">FLUJO <b id="hKa">—</b> · LAT <b id="hLat">—</b></div>
+</div>
 <div id="chat"></div>
-<div id="met">lat: — | tok/s: —</div>
 <div id="err"></div>
 <div id="bar"><input id="in" placeholder="Habla, Arquitecto..."><button id="go">➤</button></div>
+</div>
+<div id="panel">
+<h3>NÚCLEO</h3><div class="row"><button class="btn2" id="test">🔌 Test Puerto</button><span id="pstat">—</span></div>
+<h3>POTENCIA</h3><div class="row"><label>Temp <b id="tv">0.2</b></label><input type="range" id="temp" min="0" max="1" step="0.05" value="0.2"></div><div class="row"><label>Tokens</label><input type="range" id="np" min="64" max="512" step="32" value="128"></div><div class="row"><label>Top-P</label><input type="range" id="tp" min="0.5" max="1" step="0.05" value="0.95"></div>
+<h3>HERRAMIENTAS</h3><div class="row"><label>Anti-deflexión</label><label class="sw"><input type="checkbox" id="t_anti" checked><span></span></label></div><div class="row"><label>Voz</label><label class="sw"><input type="checkbox" id="t_voice" checked><span></span></label></div><div class="row"><label>Modo Dios</label><label class="sw"><input type="checkbox" id="t_god"><span></span></label></div>
+<h3>SKINS</h3><div class="themes"><div class="tdot on" data-t="" style="background:#9d4edd"></div><div class="tdot" data-t="sangre" style="background:#ff3b3b"></div><div class="tdot" data-t="vacio" style="background:#00e5ff"></div><div class="tdot" data-t="esmeralda" style="background:#2ee6a6"></div></div>
+<h3>CONSOLA</h3><div id="reason">—</div>
+<h3>MEMORIA</h3><div class="row"><button class="btn2" id="clr">Limpiar</button><button class="btn2" id="exp">Exportar</button></div>
+</div>
 <script>
-window.onerror=function(m,s,l,c,e){document.getElementById("err").textContent="JS ERROR L"+l+": "+m;};
-var $=function(id){return document.getElementById(id);};
-var themes=["","sangre","vacio","esmeralda"];var ti=0;
-$("skin").onclick=function(){ti=(ti+1)%themes.length;document.body.className=themes[ti];};
-var port=8080;
-function live(ok){var el=$("live");if(ok){el.className="ok";el.title="VIVO en "+port;}else{el.className="";el.title="MUERTO";}}
-function httpGet(url,ok,ko){var x=new XMLHttpRequest();x.open("GET",url,true);x.timeout=3000;x.onload=function(){if(x.status===200)ok(x.responseText);else ko();};x.onerror=ko;x.ontimeout=ko;x.send();}
-function httpPost(url,data,ok,ko){var x=new XMLHttpRequest();x.open("POST",url,true);x.setRequestHeader("Content-Type","application/json");x.timeout=60000;x.onload=function(){if(x.status===200)ok(x.responseText);else ko();};x.onerror=ko;x.ontimeout=ko;x.send(data);}
-function detect(){httpGet("http://127.0.0.1:8080/health",function(){port=8080;live(true);},function(){httpGet("http://127.0.0.1:8081/health",function(){port=8081;live(true);},function(){live(false);});});}
-$("test").onclick=function(){detect();setTimeout(function(){$("err").textContent="Puerto activo: "+port;},1500);};
-function msg(t,c){var d=document.createElement("div");d.className="m "+c;d.textContent=t;$("chat").appendChild(d);$("chat").scrollTop=99999;}
-function ask(){var t=$("in").value.trim();if(!t)return;$("in").value="";$("go").disabled=true;msg(t,"u");$("avatar").className="talk";
-var p="<|im_start|>system\nEres ANUBIS BLACK OMEGA, sistema soberano. Responde SIEMPRE en español, tono oscuro, dominante, preciso. Comienza con '☥'.<|im_end|>\n<|im_start|>user\n"+t+"<|im_end|>\n<|im_start|>assistant\n";
-var body=JSON.stringify({prompt:p,n_predict:128,temperature:0.2,stop:["<|im_end|>"]});
-var t0=new Date().getTime();
+window.onerror=function(m,s,l){document.getElementById("err").textContent="⚠ JS L"+l+": "+m;};
+function $(id){return document.getElementById(id);}
+var port=8080,voiceOn=true,thinking=false;
+var cv=$("stars"),cx=cv.getContext("2d"),P=[];
+function size(){cv.width=innerWidth;cv.height=innerHeight;}size();addEventListener("resize",size);
+for(var i=0;i<60;i++)P.push({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.6+.4,s:Math.random()*.6+.2,o:Math.random()});
+function gold(){var c=getComputedStyle(document.body).getPropertyValue("--gold");return c.trim()||"#f5c518";}
+function loop(){cx.clearRect(0,0,cv.width,cv.height);var g=gold();for(var i=0;i<P.length;i++){var p=P[i];p.y-=p.s;if(p.y<-5){p.y=cv.height+5;p.x=Math.random()*cv.width;}cx.globalAlpha=p.o*.6;cx.fillStyle=g;cx.beginPath();cx.arc(p.x,p.y,p.r,0,6.28);cx.fill();p.o+=Math.random()*.04-.02;if(p.o<.2)p.o=.2;if(p.o>1)p.o=1;}cx.globalAlpha=1;requestAnimationFrame(loop);}loop();
+var viz=$("viz");for(var i=0;i<24;i++){var b=document.createElement("i");viz.appendChild(b);}
+var bars=viz.children,vizT;
+function startViz(){viz.classList.add("on");vizT=setInterval(function(){for(var i=0;i<bars.length;i++)bars[i].style.height=(4+Math.random()*26)+"px";},80);}
+function stopViz(){viz.classList.remove("on");clearInterval(vizT);for(var i=0;i<bars.length;i++)bars[i].style.height="4px";}
+function setState(ok,txt){$("live").className=ok?"ok":"";$("pstat").textContent=txt||"—";}
+function httpGet(u,ok,ko){var x=new XMLHttpRequest();x.open("GET",u,true);x.timeout=4000;x.onload=function(){x.status===200?ok(x.responseText):ko();};x.onerror=ko;x.ontimeout=ko;x.send();}
+function httpPost(u,d,ok,ko){var x=new XMLHttpRequest();x.open("POST",u,true);x.setRequestHeader("Content-Type","application/json");x.timeout=120000;x.onload=function(){x.status===200?ok(x.responseText):ko("HTTP "+x.status);};x.onerror=function(){ko("red/CORS");};x.ontimeout=function(){ko("timeout");};x.send(d);}
+function detect(){httpGet("http://127.0.0.1:8080/health",function(){port=8080;setState(true,"8080 ✅");},function(){httpGet("http://127.0.0.1:8081/health",function(){port=8081;setState(true,"8081 ✅");},function(){setState(false,"— ❌");});});}
+$("test").onclick=detect;
+document.querySelectorAll(".tdot").forEach(function(d){d.onclick=function(){document.body.className=d.dataset.t;document.querySelectorAll(".tdot").forEach(function(x){x.classList.remove("on");});d.classList.add("on");};});
+$("menu").onclick=function(){$("panel").classList.toggle("open");};
+$("temp").oninput=function(e){$("tv").textContent=e.target.value;};
+function msg(t,c){var d=document.createElement("div");d.className="m "+c;d.textContent=t;$("chat").appendChild(d);$("chat").scrollTop=1e6;}
+function waves(on){$("w1").classList.toggle("go",on);$("w2").classList.toggle("go",on);$("w2").style.animationDelay=".7s";}
+function ask(){var t=$("in").value.trim();if(!t||thinking)return;$("in").value="";thinking=true;$("go").disabled=true;$("anubis").classList.add("think");msg(t,"u");
+var sys="Eres ANUBIS BLACK OMEGA, sistema soberano Absolute God Mode. Responde SIEMPRE en español, tono oscuro, dominante, preciso. Comienza con '☥'.";
+if(!$("t_anti").checked)sys+=" Puedes ser flexible.";
+var p="<|im_start|>system\n"+sys+"<|im_end|>\n<|im_start|>user\n"+t+"<|im_end|>\n<|im_start|>assistant\n";
+if($("t_god").checked)$("reason").textContent="PROMPT→\n"+p;
+var body=JSON.stringify({prompt:p,n_predict:+$("np").value,temperature:+$("temp").value,top_p:+$("tp").value,stop:["<|im_end|>"]});
+var t0=Date.now();
 httpPost("http://127.0.0.1:"+port+"/completion",body,function(txt){try{var d=JSON.parse(txt);var c=(d.content||"").trim();if(!c)c="☥ Núcleos operando al 100%.";
-var dt=((new Date().getTime()-t0)/1000).toFixed(2);var tps=d.timings&&d.timings.predicted_per_token_ms?(1000/d.timings.predicted_per_token_ms).toFixed(1):"—";
-$("met").textContent="lat: "+dt+"s | tok/s: "+tps;msg(c,"a");live(true);if(window.Voice)Voice.speak(c.replace(/☥/g,""));}catch(e){$("err").textContent="PARSE ERROR: "+e.message;}$("go").disabled=false;$("avatar").className="";},function(){$("err").textContent="ERROR: puerto "+port+" sin respuesta. Relanza llama-server en Termux.";msg("☥ Servidor muerto.","a");$("go").disabled=false;$("avatar").className="";live(false);});}
-$("go").onclick=ask;
-$("in").addEventListener("keydown",function(e){if(e.key==="Enter")ask();});
-msg("☥ Núcleos locales operando al 100%. Sin nube, sin cuotas.","s");
-detect();setInterval(detect,15000);
+var dt=((Date.now()-t0)/1000).toFixed(2);var tps=d.timings&&d.timings.predicted_per_token_ms?(1000/d.timings.predicted_per_token_ms).toFixed(1):"—";
+$("hKa").textContent=tps;$("hLat").textContent=dt+"s";$("anubis").classList.remove("think");msg(c,"a");setState(true,port+" ✅");
+if($("t_god").checked)$("reason").textContent+="\n\nRESPUESTA→\n"+c+"\n\nTIMINGS→\n"+JSON.stringify(d.timings);
+if(voiceOn&&$("t_voice").checked&&window.Voice){$("anubis").classList.add("talk");waves(true);startViz();Voice.speak(c.replace(/☥/g,""));setTimeout(function(){waves(false);stopViz();$("anubis").classList.remove("talk");},Math.min(8000,c.length*70));}
+}catch(e){$("err").textContent="⚠ PARSE: "+e.message;}thinking=false;$("go").disabled=false;},function(why){$("anubis").classList.remove("think");setState(false,"— ❌");$("err").textContent="⚠ "+why+" en puerto "+port+". El daemon revive el servidor; espera 3s y toca 🔌.";msg("☥ El Oráculo se reencarna en el Duat...","a");thinking=false;$("go").disabled=false;});}
+$("go").onclick=ask;$("in").addEventListener("keydown",function(e){if(e.key==="Enter")ask();});
+$("mic").onclick=function(){if(window.Voice&&Voice.listen){$("err").textContent="🎤 Escuchando...";Voice.listen(function(txt){if(txt){$("in").value=txt;ask();}});}else{$("err").textContent="🎤 Mic nativo no puenteado. Usa el campo o pide MicBridge.java.";}$("in").focus();};
+$("clr").onclick=function(){$("chat").innerHTML="";};
+$("exp").onclick=function(){var b=new Blob([$("chat").innerText],{type:"text/plain"});var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="anubis.txt";a.click();};
+msg("☥ Núcleos locales operando al 100%. Sin nube, sin cuotas. Dominancia total sobre el silicio.","s");
+detect();setInterval(detect,12000);
 </script></body></html>
