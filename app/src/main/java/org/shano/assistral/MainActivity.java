@@ -46,6 +46,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
+import android.content.Intent;
+import org.shano.assistral.MicBridge;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
 import android.widget.Toast;
@@ -64,6 +66,7 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     private WebView chatWebView = null;
+    private MicBridge micBridge;
     private ImageButton restrictedButton = null;
     private WebSettings chatWebSettings = null;
     private CookieManager chatCookieManager = null;
@@ -165,6 +168,7 @@ public class MainActivity extends Activity {
         chatWebView.addJavascriptInterface(new BlobDownloadHandler(), "Android");
         chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
         chatWebView.addJavascriptInterface(new org.shano.assistral.VoiceBridge(this), "Voice");
+        micBridge=new MicBridge(this, chatWebView); chatWebView.addJavascriptInterface(micBridge, "Mic");
         chatWebView.addJavascriptInterface(new ModuleX(), "ModuleX");
         chatWebView.addJavascriptInterface(new org.shano.assistral.VoiceBridge(this), "Voice");
         registerForContextMenu(chatWebView);
@@ -673,5 +677,22 @@ public class MainActivity extends Activity {
     private String escapeJs(String s) {
         return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
+
+@Override
+
+protected void onActivityResult(int rc,int r,Intent d){
+
+    if(rc==1337&&r==android.app.Activity.RESULT_OK&&d!=null){
+
+        java.util.ArrayList<String> res=d.getStringArrayListExtra(android.speech.RecognizerIntent.RESULT_RESULTS);
+
+        if(micBridge!=null)micBridge.onResult(res);
+
+    }
+
+    super.onActivityResult(rc,r,d);
+
+}
+
 
 }
