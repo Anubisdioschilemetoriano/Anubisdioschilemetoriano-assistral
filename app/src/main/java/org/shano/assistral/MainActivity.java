@@ -47,6 +47,9 @@ import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebView;
 import android.content.Intent;
+import org.shano.assistral.VoiceBridge;
+import org.shano.assistral.MicBridge;
+import android.content.Intent;
 import org.shano.assistral.MicBridge;
 import android.webkit.WebViewClient;
 import android.widget.ImageButton;
@@ -437,6 +440,9 @@ public class MainActivity extends Activity {
         chatWebSettings = chatWebView.getSettings();
         //Enable some WebView features
         chatWebSettings.setJavaScriptEnabled(true);
+        voiceBridge=new VoiceBridge(this); micBridge=new MicBridge(this, chatWebView);
+        chatWebView.addJavascriptInterface(voiceBridge, "Voice");
+        chatWebView.addJavascriptInterface(micBridge, "Mic");
         chatWebSettings.setDomStorageEnabled(true);
         chatWebSettings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebSettings.setDomStorageEnabled(true);
