@@ -442,9 +442,13 @@ public class MainActivity extends Activity {
         chatWebSettings = chatWebView.getSettings();
         //Enable some WebView features
         chatWebSettings.setJavaScriptEnabled(true);
-        voiceBridge=new VoiceBridge(this); micBridge=new MicBridge(this, chatWebView);
+        voiceBridge = new VoiceBridge(this);
+        micBridge = new MicBridge(this, chatWebView);
         chatWebView.addJavascriptInterface(voiceBridge, "Voice");
         chatWebView.addJavascriptInterface(micBridge, "Mic");
+        voiceBridge=new VoiceBridge(this); micBridge=new MicBridge(this, chatWebView);
+        chatWebView.addJavascriptInterface(voiceBridge, "Voice");
+        chatWebView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebView.getSettings().setDomStorageEnabled(true);
         chatWebView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebView.getSettings().setDomStorageEnabled(true);
