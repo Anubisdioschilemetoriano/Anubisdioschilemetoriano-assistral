@@ -69,6 +69,8 @@ import java.util.ArrayList;
 public class MainActivity extends Activity {
 
     private WebView chatWebView = null;
+    private VoiceBridge voiceBridge;
+    private MicBridge micBridge;
     private MicBridge micBridge;
     private ImageButton restrictedButton = null;
     private WebSettings chatWebSettings = null;
@@ -449,7 +451,7 @@ public class MainActivity extends Activity {
         chatWebView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
         chatWebView.getSettings().setDomStorageEnabled(true);
-        chatWebView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        chatWebView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             chatWebSettings.setSafeBrowsingEnabled(true);
         }
@@ -690,7 +692,7 @@ protected void onActivityResult(int rc,int r,Intent d){
 
     if(rc==1337&&r==android.app.Activity.RESULT_OK&&d!=null){
 
-        java.util.ArrayList<String> res=d.getStringArrayListExtra(android.speech.RecognizerIntent.RESULT_RESULTS);
+        java.util.ArrayList<String> res=d.getStringArrayListExtra(android.speech.RecognizerIntent.RESULTS_RECOGNITION);
 
         if(micBridge!=null)micBridge.onResult(res);
 
