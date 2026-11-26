@@ -443,13 +443,13 @@ public class MainActivity extends Activity {
         voiceBridge=new VoiceBridge(this); micBridge=new MicBridge(this, chatWebView);
         chatWebView.addJavascriptInterface(voiceBridge, "Voice");
         chatWebView.addJavascriptInterface(micBridge, "Mic");
-        chatWebSettings.setDomStorageEnabled(true);
-        chatWebSettings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        chatWebSettings.setDomStorageEnabled(true);
-        chatWebSettings.setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        chatWebView.getSettings().setDomStorageEnabled(true);
+        chatWebView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+        chatWebView.getSettings().setDomStorageEnabled(true);
+        chatWebView.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         chatWebSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        chatWebSettings.setDomStorageEnabled(true);
-        chatWebSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        chatWebView.getSettings().setDomStorageEnabled(true);
+        chatWebView.getSettings().setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             chatWebSettings.setSafeBrowsingEnabled(true);
         }
